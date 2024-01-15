@@ -1,0 +1,231 @@
+body{
+  background-color:#001122;
+  color:azure;
+}
+
+td{
+  color:azure;
+}
+
+th{
+  color:#DE006D;
+}
+
+a{
+  color:azure;
+}
+
+#SortSelect{
+  position: relative;
+  top:0px;
+  max-width: 150px;
+  background-color: inherit;
+  color: #DE006D;
+  font-size:inherit;
+  padding: 0;
+  border: none;
+  background: none;
+}
+#Sort{
+  position: relative;
+  top:0px;
+  background-color: inherit;
+  color: #DE006D;
+  font-size:inherit;
+  padding: 0;
+  border: none;
+  background: none;
+}
+#Sort:hover{
+  color:azure;
+  transition:0.5s;
+}
+
+
+#Excel{
+  position: relative;
+  top: 0px;
+  background-color: inherit;
+  color: #DE006D;
+  font-size:inherit;
+  padding: 0;
+  border: none;
+  background: none;
+}
+#Excel:hover{
+  color:azure;
+  transition:0.5s;
+}
+
+@media (prefers-color-scheme: light) {
+  body{
+    background-color:azure;
+    color:#060061;
+  }
+  
+  td{
+    color:#060061;
+  }
+  
+  a{
+    color:#060061;
+  }
+
+  #Sort:hover{
+  color:#060061;
+  transition:.5s;
+  }
+  #Excel:hover{
+    color:#060061;
+    transition:.5s;
+  }
+}
+
+/* The sidebar menu */
+.sidebar {
+  height: 100%; 
+  width: 0; 
+  position: fixed; 
+  z-index: 2; 
+  top: 0;
+  right: 0;
+  background-color: #111;
+  overflow-x: hidden; 
+  padding-top: 60px; 
+  transition: 0.5s; 
+  z-index: 5;
+}
+
+/* The sidebar links */
+.sidebar a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #DE006D;
+  display: block;
+  transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidebar a:hover {
+  color: #f1f1f1;
+}
+
+/* Position and style the close button (top right corner) */
+.sidebar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+  z-index: 5;
+}
+
+/* The button used to open the sidebar */
+.openbtn {
+  position:fixed;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: #111;
+  color: #DE006D;
+  padding: 10px 15px;
+  border: none;
+  right:50px;
+  top:0px;
+  z-index: 4;
+}
+
+.openbtn:hover {
+  color: #fff;
+  transition: 0.5s;
+}
+
+/* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+#Menu {
+  transition: margin-right .5s; /* If you want a transition effect */
+  padding: 20px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidebar {padding-top: 15px;}
+  .sidebar a {font-size: 18px;}
+} 
+
+.top_bar{
+  position:fixed;
+  top:0px;
+  left:0px;
+  width: 100%;
+  height: 50px;
+  background-color: #111;
+  z-index:2;
+}
+
+.logo{
+  position:relative;
+  top: 0px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 30%;
+  height: auto;
+  z-index: 3;
+}
+
+.page_name{
+  position: fixed;
+  top:-15px;
+  left:15px;
+  color:aliceblue;
+}
+
+.SignUp{
+  position: absolute;
+  bottom: 69px;
+  right: 12px;
+  text-align: center;
+}
+.LogIn{
+  position: absolute;
+  bottom: 69px;
+  left: 0px;
+}
+.Logout{
+  position: absolute;
+  bottom: 69px;
+  left: 23%;
+  text-align: center;
+}
+.Success{
+  position: absolute;
+  color:#DE006D;
+  bottom: 111px;
+  left: 13%;
+  font-size: 23px;
+  text-align: center;
+}
+.User{
+  position: absolute;
+  color:azure;
+  bottom: 80px;
+  left: 69px;
+  font-size: 23px;
+  text-align: center;
+}
+
+.edit{
+  background-color:transparent;
+  color:#00c9c9;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.delete{
+  background-color:transparent;
+  color:#ba0000;
+  padding: 0;
+  border: none;
+  background: none;
+}
