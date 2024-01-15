@@ -1,0 +1,573 @@
+hello, this is my first file, Direction.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Snake
+{
+    public class Direction
+    {
+        public readonly static Direction Left = new Direction(0, -1);
+        public readonly static Direction Right = new Direction(0, 1);
+        public readonly static Direction Up = new Direction(-1, 0);
+        public readonly static Direction Down = new Direction(1, 0);
+        public  int RowOffset { get; }
+        public int ColOffset { get; }
+
+        private Direction(int rowOffset, int colOffset)
+        {
+            RowOffset = rowOffset;
+            ColOffset = colOffset;
+        }
+
+        public Direction Opposite()
+        {
+            return new Direction(-RowOffset, -ColOffset);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Direction direction &&
+                   RowOffset == direction.RowOffset &&
+                   ColOffset == direction.ColOffset;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(RowOffset, ColOffset);
+        }
+
+        public static bool operator ==(Direction? left, Direction? right)
+        {
+            return EqualityComparer<Direction>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Direction? left, Direction? right)
+        {
+            return !(left == right);
+        }
+    }
+}
+
+this is my second, GridValue.cs
+namespace Snake
+{
+    public enum GridValue
+    {
+        Empty,
+        Snake,
+        Food,
+        Outside
+    }
+}
+
+this is my third one, Snake
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Body.png" />
+    <None Remove="Assets\DeadBody.png" />
+    <None Remove="Assets\DeadHead.png" />
+    <None Remove="Assets\DroidSansMono.ttf" />
+    <None Remove="Assets\Empty.png" />
+    <None Remove="Assets\Food.png" />
+    <None Remove="Assets\Head.png" />
+    <None Remove="Assets\icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Body.png" />
+    <Resource Include="Assets\DeadBody.png" />
+    <Resource Include="Assets\DeadHead.png" />
+    <Resource Include="Assets\DroidSansMono.ttf" />
+    <Resource Include="Assets\Empty.png" />
+    <Resource Include="Assets\Food.png" />
+    <Resource Include="Assets\Head.png" />
+    <Resource Include="Assets\icon.ico" />
+  </ItemGroup>
+
+</Project>
+this is my 4th one, MainWindow.xaml
+<Window x:Class="Snake.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Snake"
+        mc:Ignorable="d"
+        Title="Snake" Height="500" Width="800"
+        MinWidth="300" MinHeight="300"
+        Background="{StaticResource BackgroundColor}"
+        Foreground="{StaticResource TextColor}"
+        FontFamily="{StaticResource MainFont}"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/icon.ico"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        KeyDown="Window_KeyDown">
+    <Viewbox>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock x:Name="ScoreText"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Text="SCORE 0"
+                   FontSize="22"
+                   Margin="10"/>
+
+            <Border x:Name="GridBorder"
+                Grid.Row="1"
+                BorderBrush="{StaticResource GridLineColor}"
+                BorderThickness="1.5"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                RenderOptions.EdgeMode="Aliased"
+                Margin="20,0,20,20">
+                <UniformGrid x:Name="GameGrid"
+                         Width="400"
+                         Height="400"
+                         Background="{StaticResource GridBackgroundColor}"
+                         SnapsToDevicePixels="True"
+                         RenderOptions.BitmapScalingMode="HighQuality">
+                </UniformGrid>
+            </Border>
+
+            <Border x:Name="Overlay"
+                    Grid.Row="1"
+                    Background="{StaticResource OverlayColor}"
+                    Width="{Binding Path=ActualWidth, ElementName=GridBorder}"
+                    Height="{Binding Path=ActualHeight, ElementName=GridBorder}"
+                    Margin="{Binding Path=Margin, ElementName=GridBorder}"
+                    RenderOptions.EdgeMode="Aliased">
+                <TextBlock x:Name="OverlayText"
+                           Text="Press any key"
+                           FontSize="26"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+
+            </Border>
+        </Grid>
+    </Viewbox>
+</Window>
+this is my 5th one, MainWindow.xaml.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace Snake
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        private readonly Dictionary<GridValue, ImageSource> gridValToImage = new()
+        {
+            { GridValue.Empty, Images.Empty },
+            { GridValue.Snake, Images.Body },
+            { GridValue.Food, Images.Food }
+        };
+
+
+        private readonly int rows = 15, cols = 15;
+        private readonly Image[,] gridImages;
+        private GameState gameState;
+        private bool gameRunning;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            gridImages = SetupGrid();
+            gameState = new GameState(rows, cols);
+        }
+
+
+        
+        private Image[,] SetupGrid()
+        {
+            Image[,] images = new Image[rows, cols];
+            GameGrid.Rows = rows;
+            GameGrid.Columns = cols;
+
+            for(int r = 0; r < rows; r++)
+            {
+                for(int c = 0; c < cols; c++)
+                {
+                    Image image = new Image
+                    {
+                        Source = Images.Empty
+                    };
+
+                    images[r, c] = image;
+                    GameGrid.Children.Add(image);
+                }
+            }
+            return images;
+        }
+        
+        private void Draw()
+        {
+            DrawGrid();
+        }
+
+        private async Task RunGame()
+        {
+            Draw();
+            await ShowCountDown();
+            Overlay.Visibility = Visibility.Hidden;
+            await GameLoop();
+        }
+
+        private async void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if(Overlay.Visibility == Visibility.Visible)
+            {
+                e.Handled = true;
+            }
+
+            if(!gameRunning)
+            {
+                gameRunning = true;
+                await RunGame();
+                gameRunning= false;
+            }
+        }
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (gameState.GameOver)
+            {
+                return;
+            }
+
+            switch (e.Key)
+            {
+                case Key.Left:
+                    gameState.ChangeDirections(Direction.Left);
+                    break;
+                case Key.Right:
+                    gameState.ChangeDirections(Direction.Right);
+                    break;
+                case Key.Up:
+                    gameState.ChangeDirections(Direction.Up);
+                    break;
+                case Key.Down:
+                    gameState.ChangeDirections(Direction.Down);
+                    break;
+            }
+        }
+
+      private async Task GameLoop()
+        {
+            while (!gameState.GameOver)
+            {
+                await Task.Delay(100);
+                gameState.Move();
+                Draw();
+            }
+        }
+
+       
+
+        private void DrawGrid()
+        {
+            for(int r = 0; r < rows; r++)
+            {
+                for(int c = 0; c < cols; c++)
+                {
+                    GridValue gridVal = gameState.Grid[r, c];
+                    gridImages[r, c].Source = gridValToImage[gridVal];
+                }
+            }
+        }
+
+        private async Task ShowCountDown()
+        {
+            for(int i = 3; i >= 1; i--)
+            {
+                OverlayText.Text = i.ToString();
+                await Task.Delay(500);
+            }
+        }
+    }
+}
+this is my 6th one, GameState.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Snake
+{
+    public class GameState
+    {
+        public int Rows { get; }
+        public int Cols { get; }
+        public GridValue[,] Grid { get; }
+        public Direction Dir { get; private set; }
+        public int Score { get; private set; }
+        public bool GameOver { get; private set; }
+
+        private readonly LinkedList<Direction> dirChanges = new LinkedList<Direction>();
+        private readonly LinkedList<Position> snakePositions = new LinkedList<Position>();
+        private readonly Random random = new Random();
+
+        public GameState(int rows, int cols)
+        {
+            Rows = rows;
+            Cols = cols;
+            Grid = new GridValue[rows, cols];
+            Dir = Direction.Right;
+
+            AddSnake();
+            AddFood();
+        }
+        private void AddSnake()
+        {
+            int r = Rows / 2;
+            for (int c = 1; c <= 3; c++)
+            {
+                Grid[r, c] = GridValue.Snake;
+                snakePositions.AddFirst(new Position(r, c));
+            }
+        }
+        private IEnumerable<Position> EmptyPositions()
+        {
+            for (int r = 0; r < Rows; r++) 
+            { 
+                for(int c = 0; c < Cols; c++)
+                {
+                    if (Grid[r, c] == GridValue.Empty)
+                    {
+                        yield return new Position(r, c);
+                    }
+                }
+            }
+        }
+
+        private void AddFood()
+        {
+            List<Position> empty = new List<Position>(EmptyPositions());
+
+            if (empty.Count == 0)
+            {
+                return;
+            }
+
+            Position pos = empty[random.Next(empty.Count)];
+            Grid[pos.Row, pos.Col] = GridValue.Food;
+        }
+        public Position HeadPosition()
+        {
+            return snakePositions.First.Value;
+        }
+        public Position TailPosition()
+        {
+            return snakePositions.Last.Value;
+        }
+
+        public IEnumerable<Position> SnakePositions()
+        {
+            return snakePositions;
+        }
+
+        private void AddHead(Position pos)
+        {
+            snakePositions.AddFirst(pos);
+            Grid[pos.Row, pos.Col] = GridValue.Snake;
+        }
+
+        private void RemoveTail()
+        {
+            Position tail = snakePositions.Last.Value;
+            Grid[tail.Row, tail.Col] = GridValue.Empty;
+            snakePositions.RemoveLast();
+        }
+
+        private Direction GetLastDirection()
+        {
+            if(dirChanges.Count == 0)
+            {
+                return Dir;
+            }
+            return dirChanges.Last.Value;
+        }
+
+        private bool CanChangeDirection(Direction newDir)
+        {
+            if (dirChanges.Count == 2)
+            {
+                return false;
+            }
+
+            Direction lastDir = GetLastDirection();
+            return newDir != lastDir && newDir != lastDir.Opposite();
+        
+        }
+
+        public void ChangeDirections(Direction dir)
+        {
+            if(CanChangeDirection(dir))
+            {
+                dirChanges.AddLast(dir);
+            }
+           
+        }
+
+        private bool OutsideGrid(Position pos)
+        {
+            return pos.Row < 0 || pos.Row >= Rows || pos.Col < 0 || pos.Col >= Cols;
+        }
+
+        private GridValue WillHit(Position newHeadPos)
+        {
+            if (OutsideGrid(newHeadPos))
+            {
+                return GridValue.Outside;
+            }
+
+            if (newHeadPos == TailPosition())
+            {
+                return GridValue.Empty;
+            }
+            return Grid[newHeadPos.Row, newHeadPos.Col];
+        }
+
+        public void Move()
+        {
+            if (dirChanges.Count > 0)
+            {
+                Dir = dirChanges.First.Value;
+                dirChanges.RemoveFirst();
+            }
+
+            Position newHeadPos = HeadPosition().Translate(Dir);
+            GridValue hit = WillHit(newHeadPos);
+
+            if (hit == GridValue.Outside || hit == GridValue.Snake) 
+            {
+                GameOver = true;
+            }
+            else if (hit == GridValue.Empty)
+            {
+                RemoveTail();
+                AddHead(newHeadPos);
+            }
+            else if (hit == GridValue.Food)
+            {
+                AddHead(newHeadPos);
+                Score++;
+                AddFood();
+            }
+        }
+    }
+}
+7th one, Position.cs
+using System;
+using System.Collections.Generic;
+
+namespace Snake
+{
+    public class Position
+    {
+        public int Row { get; }
+        public int Col { get; }
+        public Position(int row, int col)
+        {
+            Row = row;
+            Col = col;  
+        }
+
+        public Position Translate(Direction dir)
+        {
+            return new Position(Row + dir.RowOffset, Col + dir.ColOffset);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Position position &&
+                   Row == position.Row &&
+                   Col == position.Col;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Row, Col);
+        }
+
+        public static bool operator ==(Position? left, Position? right)
+        {
+            return EqualityComparer<Position>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Position? left, Position? right)
+        {
+            return !(left == right);
+        }
+    }
+}
+8th one, Images.cs
+using System;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace Snake
+{
+    public static class Images
+    {
+        public readonly static ImageSource Empty = LoadImage("Empty.png");
+        public readonly static ImageSource Body = LoadImage("Body.png");
+        public readonly static ImageSource Head = LoadImage("Head.png");
+        public readonly static ImageSource Food = LoadImage("Food.png");
+        public readonly static ImageSource DeadBody = LoadImage("DeadBody.png");
+        public readonly static ImageSource DeadHead = LoadImage("DeadHead.png");
+
+
+        private static ImageSource LoadImage(string fileName)
+        {
+            return new BitmapImage(new Uri($"Assets/{fileName}", UriKind.Relative));
+        }
+    }
+}
+9th one, App.xaml
+<Application x:Class="Snake.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Snake"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="BackgroundColor">#211E2B</SolidColorBrush>
+        <SolidColorBrush x:Key="GridBackgroundColor">#312C40</SolidColorBrush>
+        <SolidColorBrush x:Key="GridLineColor">#4F4867</SolidColorBrush>
+        <SolidColorBrush x:Key="TextColor">#EBEBEB</SolidColorBrush>
+        <SolidColorBrush x:Key="OverlayColor">#7F000000</SolidColorBrush>
+        <FontFamily x:Key="MainFont">Assets/#Droid Sans Mono</FontFamily>
+        
+        
+    </Application.Resources>
+</Application>
+
